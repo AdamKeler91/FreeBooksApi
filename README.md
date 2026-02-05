@@ -40,9 +40,8 @@ dotnet run
 
 The API will be available at:
 
-- **HTTPS**: `https://localhost:5111`
 - **HTTP**: `http://localhost:5111`
-- **Swagger UI**: `https://localhost:5111/swagger`
+- **Swagger UI**: `http://localhost:5111/swagger`
 
 ## API Endpoints
 
@@ -68,7 +67,7 @@ GET /api/books?page=1&pageSize=20&kind=epika&genre=powieść&epoch=romantyzm&sor
 **Example Request:**
 
 ```bash
-curl "https://localhost:5111/api/books?kind=epika&sortBy=title&order=desc"
+curl "http://localhost:5111/api/books?kind=epika&sortBy=title&order=desc"
 ```
 
 #### Get single book by slug
@@ -80,7 +79,7 @@ GET /api/books/{slug}
 **Example:**
 
 ```bash
-curl "https://localhost:5111/api/books/pan-tadeusz"
+curl "http://localhost:5111/api/books/pan-tadeusz"
 ```
 
 ### Authors
@@ -102,7 +101,7 @@ GET /api/authors?page=1&pageSize=20&sortBy=name&order=asc
 **Example Request:**
 
 ```bash
-curl "https://localhost:5111/api/authors?sortBy=name&order=asc"
+curl "http://localhost:5111/api/authors?sortBy=name&order=asc"
 ```
 
 #### Get books by author
@@ -114,7 +113,7 @@ GET /api/authors/{slug}/books?page=1&pageSize=20
 **Example:**
 
 ```bash
-curl "https://localhost:5111/api/authors/adam-mickiewicz/books"
+curl "http://localhost:5111/api/authors/adam-mickiewicz/books"
 ```
 
 ## Response Format
@@ -186,7 +185,7 @@ dotnet test
 ### Manual testing with Swagger
 
 1. Run the application: `dotnet run`
-2. Open browser: `https://localhost:5111/swagger`
+2. Open browser: `http://localhost:5111/swagger`
 3. Try out endpoints interactively
 
 ### Manual testing with curl
@@ -194,37 +193,37 @@ dotnet test
 **Get books:**
 
 ```bash
-curl "https://localhost:5111/api/books?page=1&pageSize=5"
+curl "http://localhost:5111/api/books?page=1&pageSize=5"
 ```
 
 **Filter books:**
 
 ```bash
-curl "https://localhost:5111/api/books?kind=epika&genre=powieść"
+curl "http://localhost:5111/api/books?kind=epika&genre=powieść"
 ```
 
 **Sort books:**
 
 ```bash
-curl "https://localhost:5111/api/books?sortBy=title&order=desc"
+curl "http://localhost:5111/api/books?sortBy=title&order=desc"
 ```
 
 **Get single book:**
 
 ```bash
-curl "https://localhost:5111/api/books/pan-tadeusz"
+curl "http://localhost:5111/api/books/pan-tadeusz"
 ```
 
 **Get authors:**
 
 ```bash
-curl "https://localhost:5111/api/authors?page=1&pageSize=10"
+curl "http://localhost:5111/api/authors?page=1&pageSize=10"
 ```
 
 **Get books by author:**
 
 ```bash
-curl "https://localhost:5111/api/authors/adam-mickiewicz/books"
+curl "http://localhost:5111/api/authors/adam-mickiewicz/books"
 ```
 
 ## Project Structure
