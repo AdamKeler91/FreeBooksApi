@@ -19,17 +19,7 @@ public class BookService : IBookService
     public async Task<BookDto> GetBookBySlugAsync(string slug)
     {
         var book = await _freeBooksClient.GetBookByIdAsync(slug);
-        return new BookDto(
-        Slug: slug,
-        Title: book.Title,
-        Description: book.FragmentData?.Html ?? string.Empty,
-        Url: book.Url,
-        Thumbnail: book.CoverThumb,
-        Authors: book.Authors.Select(a => new AuthorDto(
-            Slug: a.Slug,
-            Name: a.Name
-        )).ToList()
-    );
+        return MapBookDetailsToBookDto(book, slug);
     }
 
     public async Task<PagedResult<BookDto>> GetBooksAsync(
@@ -44,48 +34,112 @@ public class BookService : IBookService
         _logger.LogInformation("Fetching books list");
 
 
+        // 1. Fetch data
         var books = await _freeBooksClient.GetListOfBooksAsync();
-
         var authors = await _freeBooksClient.GetListOfAuthorsAsync();
 
-        var authorsByName = authors
-            .ToDictionary(a => a.Name, StringComparer.OrdinalIgnoreCase);
+        var authorsByName = authors.ToDictionary(
+            a => a.Name,
+            StringComparer.OrdinalIgnoreCase);
 
+        // 2. Map to DTOs
+        var mappedBooks = books
+            .Select(b => MapListItemToBookDto(b, authorsByName))
+            .ToList();
 
-        var mappedBooks = books.Select(b => MapToBookDto(b, authorsByName))
-                                .ToList();
+        IEnumerable<BookDto> filteredBooks = mappedBooks;
 
+        // 3. Filter
+        if (!string.IsNullOrWhiteSpace(kind))
+            filteredBooks = filteredBooks.Where(b =>
+                b.Kind != null && b.Kind.Equals(kind, StringComparison.OrdinalIgnoreCase));
 
-        var totalCount = mappedBooks.Count;
+        if (!string.IsNullOrWhiteSpace(genre))
+            filteredBooks = filteredBooks.Where(b =>
+                b.Genre != null && b.Genre.Equals(genre, StringComparison.OrdinalIgnoreCase));
 
-        var items = mappedBooks
+        if (!string.IsNullOrWhiteSpace(epoch))
+            filteredBooks = filteredBooks.Where(b =>
+                b.Epoch != null && b.Epoch.Equals(epoch, StringComparison.OrdinalIgnoreCase));
+
+        // 4. Sort
+        var sortByLower = sortBy?.ToLower() ?? "title";
+        var orderLower = order?.ToLower() ?? "asc";
+
+        if (sortByLower == "author")
+        {
+            if (orderLower == "desc")
+                filteredBooks = filteredBooks.OrderByDescending(b =>
+                    b.Authors.FirstOrDefault()?.Name ?? string.Empty);
+            else
+                filteredBooks = filteredBooks.OrderBy(b =>
+                    b.Authors.FirstOrDefault()?.Name ?? string.Empty);
+        }
+        else // title or default
+        {
+            if (orderLower == "desc")
+                filteredBooks = filteredBooks.OrderByDescending(b => b.Title);
+            else
+                filteredBooks = filteredBooks.OrderBy(b => b.Title);
+        }
+
+        // 5. Paginate
+        var totalCount = filteredBooks.Count();
+        var items = filteredBooks
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
 
+        _logger.LogInformation(
+            "Returning {ItemCount} books out of {TotalCount}",
+            items.Count, totalCount);
+
         return new PagedResult<BookDto>(
-                Items: items,
-                Page: page,
-                PageSize: pageSize,
-                TotalCount: totalCount,
-                TotalPages: (int)Math.Ceiling((double)totalCount / pageSize)
-                );
+            Items: items,
+            Page: page,
+            PageSize: pageSize,
+            TotalCount: totalCount,
+            TotalPages: (int)Math.Ceiling((double)totalCount / pageSize));
     }
 
 
 
-    private static BookDto MapToBookDto(
-        FbBookListItemDto book,
-        Dictionary<string, FbAuthorDto> authorsByName)
+    private static BookDto MapListItemToBookDto(
+    FbBookListItemDto book,
+    Dictionary<string, FbAuthorDto> authorsByName)
     {
         return new BookDto(
             Slug: book.Slug,
             Title: book.Title,
-            Description: null,
+            Description: string.Empty,
             Url: book.Url,
             Thumbnail: book.CoverThumb,
-            Authors: MapAuthors(book.Author, authorsByName)
+            Authors: MapAuthors(book.Author, authorsByName),
+            Kind: book.Kind,
+            Genre: book.Genre,
+            Epoch: book.Epoch
         );
+    }
+
+    private static BookDto MapBookDetailsToBookDto(FbBookDetailsDto book, string slug)
+    {
+        return new BookDto(
+            Slug: slug,
+            Title: book.Title,
+            Description: string.Empty,
+            Url: book.Url,
+            Thumbnail: book.CoverThumb,
+            Authors: book.Authors?.Select(a => new AuthorDto(
+
+                Slug: a.Slug ?? string.Empty,
+                Name: a.Name ?? string.Empty
+
+            )).ToList() ?? new List<AuthorDto>(),
+            Kind: book.Kinds?.FirstOrDefault()?.Name,
+            Genre: book.Genres?.FirstOrDefault()?.Name,
+            Epoch: book.Epochs?.FirstOrDefault()?.Name
+        );
+
     }
 
     private static List<AuthorDto> MapAuthors(
@@ -111,7 +165,7 @@ public class BookService : IBookService
             else
             {
                 result.Add(new AuthorDto(
-                    Slug: null,
+                    Slug: string.Empty,
                     Name: name
                 ));
             }

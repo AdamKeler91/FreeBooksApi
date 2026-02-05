@@ -6,5 +6,8 @@ public record BookDto(
     string? Description,
     string Url,
     string Thumbnail,
-    List<AuthorDto> Authors
+    List<AuthorDto> Authors,
+    string? Kind,
+    string? Genre,
+    string? Epoch
 );
