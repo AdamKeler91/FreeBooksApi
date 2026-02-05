@@ -19,7 +19,7 @@ public class FreeBooksClient : IFreeBooksClient
 
 
 
-    public async Task<FbBookDetailsDto> GetBookByIdAsync(string slug)
+    public async Task<FbBookDetailsDto> GetBookBySlugAsync(string slug)
     {
         var cacheKey = $"book_{slug}";
         string endpoint = $"books/{slug}/";

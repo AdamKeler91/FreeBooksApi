@@ -18,7 +18,7 @@ public class BookService : IBookService
 
     public async Task<BookDto> GetBookBySlugAsync(string slug)
     {
-        var book = await _freeBooksClient.GetBookByIdAsync(slug);
+        var book = await _freeBooksClient.GetBookBySlugAsync(slug);
         return MapBookDetailsToBookDto(book, slug);
     }
 
